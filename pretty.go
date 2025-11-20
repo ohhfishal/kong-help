@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"github.com/alecthomas/kong"
 	"github.com/fatih/color"
 	"strings"
@@ -54,7 +55,14 @@ func printApp(w *helpWriter, app *kong.Application) {
 	}
 }
 
-func writePositionals(w *helpWriter, args []*kong.Positional) {
+func printCardHeader(w *helpWriter, title string) {
+	w.Printf("╭─ %s ──────────────────────────────────────────────────────────────╮", ColorLow(title))
+}
+func printCardFooter(w *helpWriter) {
+	w.Print("╰──────────────────────────────────────────────────────────────────────────╯")
+}
+
+func printPositionals(w *helpWriter, args []*kong.Positional) {
 	rows := [][]string{}
 	for _, arg := range args {
 		var prefix = "  "
@@ -73,11 +81,48 @@ func writePositionals(w *helpWriter, args []*kong.Positional) {
 	w.PrintColumns(rows)
 }
 
-func printCardHeader(w *helpWriter, title string) {
-	w.Printf("╭─ %s ──────────────────────────────────────────────────────────────╮", ColorLow(title))
-}
-func printCardFooter(w *helpWriter) {
-	w.Print("╰──────────────────────────────────────────────────────────────────────────╯")
+func printFlags(w *helpWriter, flags [][]*kong.Flag) {
+	printCardHeader(w, "Options")
+
+	rows := [][]string{}
+	for _, groups := range flags {
+		// TODO: Support groups
+		for _, flag := range groups {
+			value := flag.Value
+			if value == nil {
+				continue
+			}
+
+			var prefix = "  "
+			if value.Tag != nil && value.Tag.Required {
+				prefix = ColorRequired("* ")
+			}
+			var flagStr = "  "
+			if flag.Short != 0 {
+				flagStr = fmt.Sprintf("-%c", flag.Short)
+			}
+
+			if value.Name != "" {
+				if flagStr == "  " {
+					flagStr += "  --" + value.Name
+				} else {
+					flagStr += ", --" + value.Name
+				}
+			}
+
+			components := []string{
+				prefix,
+				flagStr,
+				ColorType(strings.ToUpper(value.Target.Kind().String())),
+				// TODO: Write a custom ValueFormatter to do: "Help Message. [required] [default=""] etc
+				w.Options.ValueFormatter(value),
+			}
+			rows = append(rows, components)
+		}
+	}
+	w.CardSection().PrintColumns(rows)
+
+	printCardFooter(w)
 }
 
 func printNodeDetail(w *helpWriter, node *kong.Node, hide bool) {
@@ -95,8 +140,15 @@ func printNodeDetail(w *helpWriter, node *kong.Node, hide bool) {
 	if len(node.Positional) > 0 {
 		w.Print("")
 		printCardHeader(w, "Arguments")
-		writePositionals(w.CardSection(), node.Positional)
+		printPositionals(w.CardSection(), node.Positional)
 		printCardFooter(w)
+	}
+	if !w.Options.FlagsLast {
+		printFlags(w, node.AllFlags(true))
+	}
+	// TODO: Print the commands here
+	if w.Options.FlagsLast {
+		printFlags(w, node.AllFlags(true))
 	}
 	// printFlags := func() {
 	// 	if flags := node.AllFlags(true); len(flags) > 0 {
