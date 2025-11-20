@@ -5,13 +5,16 @@ import (
 	"fmt"
 	"github.com/alecthomas/kong"
 	"github.com/fatih/color"
+	"reflect"
 	"strings"
 )
 
 var _ kong.HelpPrinter = PrettyHelpPrinter
 
+// TODO: Make these configurable
 var ColorExample = color.New(color.FgYellow).SprintFunc()
 var ColorRequired = color.New(color.FgRed).SprintFunc()
+var ColorDefault = color.New(color.FgMagenta).SprintFunc()
 var ColorLow = color.HiBlackString
 var ColorType = ColorExample
 
@@ -107,6 +110,13 @@ func printFlags(w *helpWriter, flags [][]*kong.Flag) {
 					flagStr += "  --" + value.Name
 				} else {
 					flagStr += ", --" + value.Name
+				}
+				if tag := value.Tag; tag != nil && tag.HasDefault {
+					var q string
+					if value.Target.Kind() == reflect.String {
+						q = `"`
+					}
+					flagStr += fmt.Sprintf(`=%s`, ColorDefault(q+tag.Default+q))
 				}
 			}
 

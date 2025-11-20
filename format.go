@@ -8,7 +8,12 @@ import (
 func PrettyValueFormatter(formatter kong.HelpValueFormatter) kong.HelpValueFormatter {
 	return func(value *kong.Value) string {
 		parts := []string{formatter(value)}
-		if value.Tag != nil && value.Tag.Required {
+
+		tag := value.Tag
+		if tag == nil {
+			return parts[0]
+		}
+		if tag.Required {
 			parts = append(parts, ColorRequired("[required]"))
 		}
 		return strings.Join(parts, " ")

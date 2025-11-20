@@ -10,9 +10,11 @@ import (
 )
 
 type CMD struct {
-	Arg      int    `arg:"" required:"" help:"Number"`
-	Filename string `arg:"" default:"-" type:"filecontent" help:"Filepath"`
-	Test     string `default:"test"`
+	Arg       int    `arg:"" required:"" help:"Number"`
+	Filename  string `arg:"" default:"-" type:"filecontent" help:"Filepath"`
+	Verbosity int    `short:"v" type:"counter" help:"Set verbosity"`
+	Default   string `short:"d" enum:"a,b,c" default:"a" help:"Enum example flag (${enum})."`
+	Test      string `default:"test"`
 }
 
 func main() {
