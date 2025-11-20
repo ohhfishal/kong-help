@@ -66,6 +66,7 @@ func printPositionals(w *helpWriter, args []*kong.Positional) {
 		components := []string{
 			prefix,
 			arg.Name,
+			// TODO: Parse format/enum to do along the line of PATH[existing file] or STRING[enum]
 			ColorType(strings.ToUpper(arg.Target.Kind().String())),
 			// TODO: Write a custom ValueFormatter to do: "Help Message. [required] [default=""] etc
 			w.Options.ValueFormatter(arg),
@@ -114,6 +115,7 @@ func printFlags(w *helpWriter, flags [][]*kong.Flag) {
 			components := []string{
 				prefix,
 				flagStr,
+				// TODO: Parse format/enum to do along the line of PATH[existing file] or STRING[enum]
 				ColorType(strings.ToUpper(value.Target.Kind().String())),
 				// TODO: Write a custom ValueFormatter to do: "Help Message. [required] [default=""] etc
 				w.Options.ValueFormatter(value),
@@ -193,6 +195,7 @@ func printNodeDetail(w *helpWriter, node *kong.Node, hide bool) {
 	if len(cmds) > 0 {
 		if w.Options.Tree {
 			// TODO: Fix
+			// TODO: Make it look nice with characters in the tree command
 			panic("Options.Tree not supported")
 		} else {
 			printCardHeader(w, "Commands")
