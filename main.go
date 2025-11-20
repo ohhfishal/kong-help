@@ -1,12 +1,9 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"github.com/alecthomas/kong"
 	"os"
-	"os/signal"
-	"syscall"
 )
 
 type CMD struct {
@@ -27,16 +24,9 @@ type CMD struct {
 }
 
 func main() {
-	ctx, stop := signal.NotifyContext(
-		context.Background(),
-		os.Interrupt,
-		syscall.SIGTERM,
-	)
-	defer stop()
-
 	var cli CMD
 	kongCtx := kong.Parse(
-		&cli, kong.BindTo(ctx, new(context.Context)),
+		&cli,
 		kong.Help(PrettyHelpPrinter),
 		kong.ConfigureHelp(kong.HelpOptions{
 			WrapUpperBound: -1, // Uses terminal width
