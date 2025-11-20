@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"github.com/alecthomas/kong"
 	"github.com/fatih/color"
@@ -15,6 +14,7 @@ var _ kong.HelpPrinter = PrettyHelpPrinter
 var ColorExample = color.New(color.FgYellow).SprintFunc()
 var ColorRequired = color.New(color.FgRed).SprintFunc()
 var ColorDefault = color.New(color.FgMagenta).SprintFunc()
+var ColorCommand = color.New(color.FgCyan).SprintFunc()
 var ColorLow = color.HiBlackString
 var ColorType = ColorExample
 
@@ -27,35 +27,26 @@ func PrettyHelpPrinter(options kong.HelpOptions, ctx *kong.Context) error {
 	options.ValueFormatter = PrettyValueFormatter(options.ValueFormatter)
 
 	w := newHelpWriter(ctx, options)
-	selected := ctx.Selected()
-	if selected == nil {
-		printApp(w, ctx.Model)
+	if selected := ctx.Selected(); selected == nil {
+		app := ctx.Model
+		if !w.Options.NoAppSummary {
+			w.Print("")
+			w.Printf("  %s: %s%s", ColorExample("Usuage"), app.Name, app.Summary())
+		}
+		printNodeDetail(w, app.Node, true)
 	} else {
-		return errors.New("command help not supported")
-		// printCommand(w, ctx.Model, selected)
+		if !w.Options.NoAppSummary {
+			w.Print("")
+			w.Printf("  %s: %s", ColorExample("Usuage"), selected.Summary())
+		}
+		printNodeDetail(w, selected, true)
 	}
+	// TODO: Handle Run %s --help for more info lines
 	if _, err := w.WriteTo(ctx.Stdout); err != nil {
 		return err
 	}
 	// return nil
 	return kong.DefaultHelpPrinter(options, ctx)
-}
-
-func printApp(w *helpWriter, app *kong.Application) {
-	if !w.Options.NoAppSummary {
-		w.Print("")
-		w.Printf("  %s: %s%s", ColorExample("Usuage"), app.Name, app.Summary())
-	}
-	printNodeDetail(w, app.Node, true)
-	cmds := app.Leaves(true)
-	if len(cmds) > 0 && app.HelpFlag != nil {
-		w.Print("")
-		if w.Options.Summary {
-			w.Printf(`Run "%s --help" for more information.`, app.Name)
-		} else {
-			w.Printf(`Run "%s <command> --help" for more information on a command.`, app.Name)
-		}
-	}
 }
 
 func printCardHeader(w *helpWriter, title string) {
@@ -131,8 +122,44 @@ func printFlags(w *helpWriter, flags [][]*kong.Flag) {
 		}
 	}
 	w.CardSection().PrintColumns(rows)
-
 	printCardFooter(w)
+}
+
+func printCommands(w *helpWriter, cmds []*kong.Command) {
+	if w.Options.Compact {
+		// TODO: Fix
+		panic("compact not supported")
+	}
+	// TODO: Handle groups
+	rows := [][]string{}
+	for _, cmd := range cmds {
+		if cmd.Hidden {
+			continue
+		}
+		rows = append(rows, []string{
+			ColorCommand(cmd.Path()),
+			cmd.Help,
+		})
+	}
+	w.PrintColumns(rows)
+
+	// groupedCmds := collectCommandGroups(cmds)
+	// for _, group := range groupedCmds {
+	// 	w.Print("")
+	// 	if group.Metadata.Title != "" {
+	// 		w.Wrap(group.Metadata.Title)
+	// 	}
+	// 	if group.Metadata.Description != "" {
+	// 		w.Indent().Wrap(group.Metadata.Description)
+	// 		w.Print("")
+	// 	}
+	//
+	// 	if w.Compact {
+	// 		writeCompactCommandList(group.Commands, iw)
+	// 	} else {
+	// 		writeCommandList(group.Commands, iw)
+	// 	}
+	// }
 }
 
 func printNodeDetail(w *helpWriter, node *kong.Node, hide bool) {
@@ -157,61 +184,23 @@ func printNodeDetail(w *helpWriter, node *kong.Node, hide bool) {
 		printFlags(w, node.AllFlags(true))
 	}
 	// TODO: Print the commands here
+	var cmds []*kong.Node
+	if w.Options.NoExpandSubcommands {
+		cmds = node.Children
+	} else {
+		cmds = node.Leaves(hide)
+	}
+	if len(cmds) > 0 {
+		if w.Options.Tree {
+			// TODO: Fix
+			panic("Options.Tree not supported")
+		} else {
+			printCardHeader(w, "Commands")
+			printCommands(w.CardSection(), cmds)
+			printCardFooter(w)
+		}
+	}
 	if w.Options.FlagsLast {
 		printFlags(w, node.AllFlags(true))
 	}
-	// printFlags := func() {
-	// 	if flags := node.AllFlags(true); len(flags) > 0 {
-	// 		groupedFlags := collectFlagGroups(flags)
-	// 		for _, group := range groupedFlags {
-	// 			w.Print("")
-	// 			if group.Metadata.Title != "" {
-	// 				w.Wrap(group.Metadata.Title)
-	// 			}
-	// 			if group.Metadata.Description != "" {
-	// 				w.Indent().Wrap(group.Metadata.Description)
-	// 				w.Print("")
-	// 			}
-	// 			writeFlags(w.Indent(), group.Flags)
-	// 		}
-	// 	}
-	// }
-	// if !w.FlagsLast {
-	// 	printFlags()
-	// }
-	// var cmds []*kong.Node
-	// if w.Options.NoExpandSubcommands {
-	// 	cmds = node.Children
-	// } else {
-	// 	cmds = node.Leaves(hide)
-	// }
-	// if len(cmds) > 0 {
-	// 	iw := w.Indent()
-	// 	if w.Options.Tree {
-	// 		w.Print("")
-	// 		w.Print("Commands:")
-	// 		writeCommandTree(iw, node)
-	// 	} else {
-	// 		groupedCmds := collectCommandGroups(cmds)
-	// 		for _, group := range groupedCmds {
-	// 			w.Print("")
-	// 			if group.Metadata.Title != "" {
-	// 				w.Wrap(group.Metadata.Title)
-	// 			}
-	// 			if group.Metadata.Description != "" {
-	// 				w.Indent().Wrap(group.Metadata.Description)
-	// 				w.Print("")
-	// 			}
-	//
-	// 			if w.Compact {
-	// 				writeCompactCommandList(group.Commands, iw)
-	// 			} else {
-	// 				writeCommandList(group.Commands, iw)
-	// 			}
-	// 		}
-	// 	}
-	// }
-	// if w.FlagsLast {
-	// 	printFlags()
-	// }
 }

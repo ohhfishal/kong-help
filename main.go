@@ -10,11 +10,20 @@ import (
 )
 
 type CMD struct {
-	Arg       int    `arg:"" required:"" help:"Number"`
-	Filename  string `arg:"" default:"-" type:"filecontent" help:"Filepath"`
 	Verbosity int    `short:"v" type:"counter" help:"Set verbosity"`
 	Default   string `short:"d" enum:"a,b,c" default:"a" help:"Enum example flag (${enum})."`
 	Test      string `default:"test"`
+	Tree      struct {
+		Left struct {
+			Arg      int    `arg:"" required:"" help:"Number"`
+			Filename string `arg:"" default:"-" type:"filecontent" help:"Filepath"`
+		} `cmd:"" help:"Go left."`
+		Right struct {
+			Arg int `arg:"" required:"" help:"Number"`
+		} `cmd:"" help:"Go right."`
+	} `cmd:"" help:"Go down a tree"`
+	Flat struct {
+	} `cmd:""`
 }
 
 func main() {
@@ -29,6 +38,11 @@ func main() {
 	kongCtx := kong.Parse(
 		&cli, kong.BindTo(ctx, new(context.Context)),
 		kong.Help(PrettyHelpPrinter),
+		kong.ConfigureHelp(kong.HelpOptions{
+			WrapUpperBound: -1, // Uses terminal width
+			// Tree: true,
+			// NoExpandSubcommands: true,
+		}),
 	)
 
 	if err := kongCtx.Run(); err != nil {
