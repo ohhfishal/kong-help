@@ -9,11 +9,12 @@ import (
 	"syscall"
 )
 
-
 type CMD struct {
-	Arg int `arg:"" required:"" help:"Number"`
-	Test string `default:"test"`
+	Arg      int    `arg:"" required:"" help:"Number"`
+	Filename string `arg:"" default:"-" type:"filecontent" help:"Filepath"`
+	Test     string `default:"test"`
 }
+
 func main() {
 	ctx, stop := signal.NotifyContext(
 		context.Background(),
