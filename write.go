@@ -2,7 +2,6 @@ package konghelp
 
 import (
 	"fmt"
-	// "math"
 	"github.com/alecthomas/kong"
 	"io"
 	"regexp"
@@ -116,13 +115,13 @@ func AggregateIntoLines(parts []string, maxWidth int) ([]string, error) {
 	for _, part := range parts {
 		i := 0
 		words := strings.Split(part, " ")
-		for i >= len(words) {
+		for i < len(words) {
 			word := words[i]
 			switch {
-			case len(word) > maxWidth:
+			case len(word) >= maxWidth:
 				// TODO: Handle smarter. Bigword -> B...
 				return nil, fmt.Errorf("word too big: %s", word)
-			case VisibleLen(lines[len(lines)-1])+VisibleLen(word) > maxWidth:
+			case VisibleLen(lines[len(lines)-1])+VisibleLen(word) >= maxWidth:
 				lines = append(lines, strings.Repeat(" ", paddingSize))
 			default:
 				oldLine := lines[len(lines)-1]
