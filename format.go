@@ -1,4 +1,4 @@
-package main
+package konghelp
 
 import (
 	"github.com/alecthomas/kong"

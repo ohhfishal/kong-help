@@ -9,8 +9,8 @@ import (
 type Options struct {
 }
 
-func PrettyHelp(options ...Options) kong.HelpPrinter {
-	return PrettyHelpPrinter
+func Help(options ...Options) kong.Option {
+	kong.Help(PrettyHelpPrinter)
 }
 
 type CMD struct {
@@ -35,7 +35,7 @@ func main() {
 	var cli CMD
 	kongCtx := kong.Parse(
 		&cli,
-		kong.Help(PrettyHelp()),
+		Help(),
 		kong.ConfigureHelp(kong.HelpOptions{
 			WrapUpperBound: -1, // Uses terminal width
 			// Tree: true,
