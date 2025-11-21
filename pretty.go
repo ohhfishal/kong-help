@@ -50,10 +50,13 @@ func PrettyHelpPrinter(options kong.HelpOptions, ctx *kong.Context) error {
 }
 
 func printCardHeader(w *helpWriter, title string) {
-	w.Printf("╭─ %s ──────────────────────────────────────────────────────────────╮", ColorLow(title))
+	padding := strings.Repeat("─", w.width-len(title)-7)
+	w.Printf("╭─ %s ─%s─╮", ColorLow(title), padding)
 }
+
 func printCardFooter(w *helpWriter) {
-	w.Print("╰──────────────────────────────────────────────────────────────────────────╯")
+	padding := strings.Repeat("─", w.width-2)
+	w.Print(fmt.Sprintf("╰%s╯", padding))
 }
 
 func printPositionals(w *helpWriter, args []*kong.Positional) {
@@ -139,6 +142,7 @@ func printCommands(w *helpWriter, cmds []*kong.Command) {
 			continue
 		}
 		rows = append(rows, []string{
+			"",
 			ColorCommand(cmd.Path()),
 			cmd.Help,
 		})
@@ -167,14 +171,14 @@ func printCommands(w *helpWriter, cmds []*kong.Command) {
 func printNodeDetail(w *helpWriter, node *kong.Node, hide bool) {
 	if node.Help != "" {
 		w.Print("")
-		w.Wrap(node.Help)
+		w.Print(w.Wrap(node.Help))
 	}
 	if w.Options.Summary {
 		return
 	}
 	if node.Detail != "" {
 		w.Print("")
-		w.Wrap(node.Detail)
+		w.Print(w.Wrap(node.Detail))
 	}
 	if len(node.Positional) > 0 {
 		w.Print("")

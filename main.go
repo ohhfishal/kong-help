@@ -9,6 +9,7 @@ import (
 type CMD struct {
 	Verbosity int    `short:"v" type:"counter" help:"Set verbosity"`
 	Default   string `short:"d" enum:"a,b,c" default:"a" help:"Enum example flag (${enum})."`
+	Bad       string `help:"Here is a flag that is really long and has a lot of text in it." default:"bad"`
 	Test      string `default:"test"`
 	Tree      struct {
 		Left struct {
