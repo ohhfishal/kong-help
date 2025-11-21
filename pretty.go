@@ -69,7 +69,7 @@ func printPositionals(w *helpWriter, args []*kong.Positional) {
 			prefix,
 			arg.Name,
 			// TODO: Parse format/enum to do along the line of PATH[existing file] or STRING[enum]
-			ColorType(strings.ToUpper(arg.Target.Kind().String())),
+			formatValue(arg.Target, false),
 			// TODO: Write a custom ValueFormatter to do: "Help Message. [required] [default=""] etc
 			w.Options.ValueFormatter(arg),
 		}
@@ -118,7 +118,7 @@ func printFlags(w *helpWriter, flags [][]*kong.Flag) {
 				prefix,
 				flagStr,
 				// TODO: Parse format/enum to do along the line of PATH[existing file] or STRING[enum]
-				ColorType(strings.ToUpper(value.Target.Kind().String())),
+				formatValue(value.Target, false),
 				// TODO: Write a custom ValueFormatter to do: "Help Message. [required] [default=""] etc
 				w.Options.ValueFormatter(value),
 			}
