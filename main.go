@@ -6,6 +6,13 @@ import (
 	"os"
 )
 
+type Options struct {
+}
+
+func PrettyHelp(options ...Options) kong.HelpPrinter {
+	return PrettyHelpPrinter
+}
+
 type CMD struct {
 	Verbosity int    `short:"v" type:"counter" help:"Set verbosity"`
 	Default   string `short:"d" enum:"a,b,c" default:"a" help:"Enum example flag (${enum})."`
@@ -28,7 +35,7 @@ func main() {
 	var cli CMD
 	kongCtx := kong.Parse(
 		&cli,
-		kong.Help(PrettyHelpPrinter),
+		kong.Help(PrettyHelp()),
 		kong.ConfigureHelp(kong.HelpOptions{
 			WrapUpperBound: -1, // Uses terminal width
 			// Tree: true,

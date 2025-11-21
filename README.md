@@ -25,7 +25,7 @@ func main() {
 	kongCtx := kong.Parse(
 		&cli,
         /* Just add this new option to kong.Parse */
-		kong.Help(konghelp.PrettyHelpPrinter),
+		konghelp.Help(),
 	)
 
 	if err := kongCtx.Run(); err != nil {
