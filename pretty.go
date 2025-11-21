@@ -45,8 +45,7 @@ func PrettyHelpPrinter(options kong.HelpOptions, ctx *kong.Context) error {
 	if _, err := w.WriteTo(ctx.Stdout); err != nil {
 		return err
 	}
-	// return nil
-	return kong.DefaultHelpPrinter(options, ctx)
+	return nil
 }
 
 func printCardHeader(w *helpWriter, title string) {
