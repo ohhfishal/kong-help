@@ -1,6 +1,7 @@
 package konghelp
 
 import (
+	"fmt"
 	"github.com/alecthomas/kong"
 	"reflect"
 	"strings"
@@ -42,4 +43,54 @@ func formatType(t reflect.Type) string {
 		name = t.String()
 	}
 	return ColorType(strings.ToUpper(name))
+}
+
+func formatGroup(group *kong.Group) [][]string {
+	title, _ := strings.CutSuffix(group.Title, ":")
+	return [][]string{
+		{"  ", ColorGroup(title), group.Description},
+	}
+}
+
+func formatFlag(flag *kong.Flag, format kong.HelpValueFormatter) []string {
+	if flag == nil {
+		return []string{}
+	}
+	value := flag.Value
+	if value == nil {
+		return []string{}
+	}
+
+	var prefix = "  "
+	if value.Tag != nil && value.Tag.Required {
+		prefix = ColorRequired("* ")
+	}
+	var flagStr = "  "
+	if flag.Short != 0 {
+		flagStr = fmt.Sprintf("-%c", flag.Short)
+	}
+
+	if value.Name != "" {
+		if flagStr == "  " {
+			flagStr += "  --" + value.Name
+		} else {
+			flagStr += ", --" + value.Name
+		}
+		if tag := value.Tag; tag != nil && tag.HasDefault {
+			var q string
+			if value.Target.Kind() == reflect.String {
+				q = `"`
+			}
+			flagStr += fmt.Sprintf(`=%s`, ColorDefault(q+tag.Default+q))
+		}
+	}
+
+	return []string{
+		prefix,
+		flagStr,
+		// TODO: Parse format/enum to do along the line of PATH[existing file] or STRING[enum]
+		formatValue(value.Target, false),
+		// TODO: Write a custom ValueFormatter to do: "Help Message. [required] [default=""] etc
+		format(value),
+	}
 }
