@@ -3,6 +3,7 @@ package konghelp
 import (
 	"fmt"
 	"github.com/alecthomas/kong"
+	"log/slog"
 	"reflect"
 	"strings"
 )
@@ -49,6 +50,34 @@ func formatGroup(group *kong.Group) [][]string {
 	title, _ := strings.CutSuffix(group.Title, ":")
 	return [][]string{
 		{"  ", ColorGroup(title), group.Description},
+	}
+}
+
+func formatPositional(arg *kong.Positional, format kong.HelpValueFormatter) []string {
+	var prefix = "  "
+	if arg.Tag != nil && arg.Tag.Required {
+		prefix = ColorRequired("* ")
+	}
+	return []string{
+		prefix,
+		arg.Name,
+		// TODO: Parse format/enum to do along the line of PATH[existing file] or STRING[enum]
+		formatValue(arg.Target, false),
+		// TODO: Write a custom ValueFormatter to do: "Help Message. [required] [default=""] etc
+		format(arg),
+	}
+}
+
+func formatCommand(cmd *kong.Command, compact bool) [][]string {
+	if compact {
+		slog.Warn("Option.Compact currently not supported")
+	}
+	return [][]string{
+		{
+			"  ",
+			ColorCommand(cmd.Path()),
+			cmd.Help,
+		},
 	}
 }
 

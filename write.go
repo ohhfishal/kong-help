@@ -5,7 +5,6 @@ import (
 	"github.com/alecthomas/kong"
 	"io"
 	"regexp"
-	"strconv"
 	"strings"
 )
 
@@ -32,7 +31,8 @@ func newHelpWriter(ctx *kong.Context, options kong.HelpOptions) *helpWriter {
 }
 
 // NOTE: The first part of each row must have an identical length.
-// Only the lasts part is truncated by word.
+//
+//	Only the last part is truncated by word.
 func (w *helpWriter) PrintColumns(lines [][]string) {
 	if len(lines) == 0 {
 		return
@@ -45,7 +45,7 @@ func (w *helpWriter) PrintColumns(lines [][]string) {
 			if i == len(parts) || i == 0 {
 				continue
 			}
-			part = stripAnsiCodes(part)
+			part = Visible(part)
 			if len(maxes) == i {
 				maxes = append(maxes, len(part))
 			}
@@ -61,7 +61,8 @@ func (w *helpWriter) PrintColumns(lines [][]string) {
 			if i == len(parts)-1 || i == 0 {
 				continue
 			}
-			visible := stripAnsiCodes(part)
+			// NOTE: Naive. Part is the same as the last loop
+			visible := Visible(part)
 			if width := maxes[i] - len(visible); width >= 1 {
 				padded := part + strings.Repeat(" ", width)
 				lines[j][i] = padded
@@ -77,7 +78,7 @@ func (w *helpWriter) PrintColumns(lines [][]string) {
 		}
 		for _, line := range lines {
 			var padding string
-			visible := stripAnsiCodes(line)
+			visible := Visible(line)
 			if len(visible) <= w.width {
 				padding = strings.Repeat(" ", w.width-len(visible))
 			}
@@ -89,14 +90,14 @@ func (w *helpWriter) PrintColumns(lines [][]string) {
 func AggregateIntoLines(parts []string, maxWidth int) ([]string, error) {
 	// Base case: whole line < maxWidth
 	line := strings.Join(parts, " ")
-	visible := stripAnsiCodes(line)
+	visible := Visible(line)
 	if len(visible) <= maxWidth {
 		return []string{line}, nil
 	}
 
 	tail := len(parts) - 1
 
-	// Calculate then break
+	// Find most number of columns that fit without wrapping
 	var paddingSize int
 	var lines []string
 	for {
@@ -104,13 +105,14 @@ func AggregateIntoLines(parts []string, maxWidth int) ([]string, error) {
 			return nil, fmt.Errorf("terminal too small: %v", parts)
 		}
 		newLine := strings.Join(parts[:tail], " ")
-		if visible := stripAnsiCodes(newLine); len(visible) < maxWidth {
+		if visible := Visible(newLine); len(visible) < maxWidth {
 			paddingSize = len(visible)
 			lines = []string{newLine}
 			break
 		}
 		tail--
 	}
+	// Wrap columns that don't fit
 	parts = parts[tail:]
 	for _, part := range parts {
 		i := 0
@@ -119,8 +121,12 @@ func AggregateIntoLines(parts []string, maxWidth int) ([]string, error) {
 			word := words[i]
 			switch {
 			case len(word) >= maxWidth:
-				// TODO: Handle smarter. Bigword -> B...
-				return nil, fmt.Errorf("word too big: %s", word)
+				if VisibleLen(word) != len(word) {
+					return nil, fmt.Errorf(
+						"not implemented: truncating long lines with ANSI: %s", word,
+					)
+				}
+				words[i] = TruncateWithSuffix(word, maxWidth, "...")
 			case VisibleLen(lines[len(lines)-1])+VisibleLen(word) >= maxWidth:
 				lines = append(lines, strings.Repeat(" ", paddingSize))
 			default:
@@ -136,6 +142,12 @@ func AggregateIntoLines(parts []string, maxWidth int) ([]string, error) {
 func (w *helpWriter) Print(line string) {
 	*w.lines = append(*w.lines, fmt.Sprintf("%s%s%s", w.prefix, line, w.suffix))
 }
+
+func (w *helpWriter) PrintWrap(line string) {
+	// TODO: Implement
+	w.Print(line)
+}
+
 func (w *helpWriter) Printf(format string, args ...any) {
 	w.Print(fmt.Sprintf(format, args...))
 }
@@ -150,16 +162,6 @@ func (w *helpWriter) WriteTo(writer io.Writer) (int64, error) {
 		count = count + (int64)(n)
 	}
 	return count, nil
-}
-
-// TODO: Have this wrap the line and print them
-func (h *helpWriter) Wrap(text string) string {
-	return text
-	// w := bytes.NewBuffer(nil)
-	// doc.ToText(w, strings.TrimSpace(text), "", "    ", h.width) //nolint:staticcheck // cross-package links not possible
-	// for _, line := range strings.Split(strings.TrimSpace(w.String()), "\n") {
-	// 	h.Print(line)
-	// }
 }
 
 func (h *helpWriter) Indent() *helpWriter {
@@ -181,22 +183,24 @@ func (h *helpWriter) CardSection() *helpWriter {
 	}
 }
 
-func VisibleMap(r rune) rune {
-	switch {
-	case strconv.IsPrint(r):
-		return r
-	default:
-		return -1
-	}
-}
-
 // Calculates the length of a string only counting visible characters
 func VisibleLen(str string) int {
 	// TODO: Can probably make this function optimized with simd to check for control codes
-	return len(stripAnsiCodes(str))
+	return len(Visible(str))
 }
 
-func stripAnsiCodes(str string) string {
+func Visible(str string) string {
 	ansiRegex := regexp.MustCompile(`\x1b\[[0-9;]*m`)
 	return ansiRegex.ReplaceAllString(str, "")
+}
+
+func TruncateWithSuffix(line string, width int, suffix string) string {
+	if len(line) <= width {
+		return line
+	}
+	newLine := line[:width-len(suffix)] + suffix
+	if len(newLine) > width {
+		panic("coded this wrong")
+	}
+	return newLine
 }

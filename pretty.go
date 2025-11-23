@@ -33,13 +33,13 @@ func PrettyHelpPrinter(options kong.HelpOptions, ctx *kong.Context) error {
 			w.Print("")
 			w.Printf("  %s: %s%s", ColorExample("Usuage"), app.Name, app.Summary())
 		}
-		printNodeDetail(w, app.Node, true)
+		printNode(w, app.Node, true)
 	} else {
 		if !w.Options.NoAppSummary {
 			w.Print("")
 			w.Printf("  %s: %s", ColorExample("Usuage"), selected.Summary())
 		}
-		printNodeDetail(w, selected, true)
+		printNode(w, selected, true)
 	}
 	// TODO: Handle Run %s --help for more info lines
 	if _, err := w.WriteTo(ctx.Stdout); err != nil {
@@ -48,17 +48,17 @@ func PrettyHelpPrinter(options kong.HelpOptions, ctx *kong.Context) error {
 	return nil
 }
 
-func printNodeDetail(w *helpWriter, node *kong.Node, hide bool) {
+func printNode(w *helpWriter, node *kong.Node, hide bool) {
 	if node.Help != "" {
 		w.Print("")
-		w.Print(w.Wrap(node.Help))
+		w.Indent().PrintWrap(node.Help)
 	}
 	if w.Options.Summary {
 		return
 	}
 	if node.Detail != "" {
 		w.Print("")
-		w.Print(w.Wrap(node.Detail))
+		w.Indent().PrintWrap(node.Detail)
 	}
 	if len(node.Positional) > 0 {
 		w.Print("")
@@ -67,22 +67,13 @@ func printNodeDetail(w *helpWriter, node *kong.Node, hide bool) {
 	if !w.Options.FlagsLast {
 		printFlags(w, node.AllFlags(true))
 	}
-	// TODO: Print the commands here
-	var cmds []*kong.Node
+
 	if w.Options.NoExpandSubcommands {
-		cmds = node.Children
+		printCommands(w, node.Children)
 	} else {
-		cmds = node.Leaves(hide)
+		printCommands(w, node.Leaves(hide))
 	}
-	if len(cmds) > 0 {
-		if w.Options.Tree {
-			// TODO: Fix
-			// TODO: Make it look nice with characters in the tree command
-			panic("Options.Tree not supported")
-		} else {
-			printCommands(w, cmds)
-		}
-	}
+
 	if w.Options.FlagsLast {
 		printFlags(w, node.AllFlags(true))
 	}
@@ -91,19 +82,8 @@ func printNodeDetail(w *helpWriter, node *kong.Node, hide bool) {
 func printPositionals(w *helpWriter, args []*kong.Positional) {
 	lines := [][]string{}
 	for _, arg := range args {
-		var prefix = "  "
-		if arg.Tag != nil && arg.Tag.Required {
-			prefix = ColorRequired("* ")
-		}
-		components := []string{
-			prefix,
-			arg.Name,
-			// TODO: Parse format/enum to do along the line of PATH[existing file] or STRING[enum]
-			formatValue(arg.Target, false),
-			// TODO: Write a custom ValueFormatter to do: "Help Message. [required] [default=""] etc
-			w.Options.ValueFormatter(arg),
-		}
-		lines = append(lines, components)
+		line := formatPositional(arg, w.Options.ValueFormatter)
+		lines = append(lines, line)
 	}
 	printCard(w, "Arguments", lines)
 }
@@ -114,8 +94,7 @@ func printFlags(w *helpWriter, flags [][]*kong.Flag) {
 		lines = append(lines, formatGroup(collection.Metadata)...)
 		for _, flagset := range collection.Flags {
 			for _, flag := range flagset {
-				line := formatFlag(flag, w.Options.ValueFormatter)
-				lines = append(lines, line)
+				lines = append(lines, formatFlag(flag, w.Options.ValueFormatter))
 			}
 		}
 	}
@@ -123,21 +102,19 @@ func printFlags(w *helpWriter, flags [][]*kong.Flag) {
 }
 
 func printCommands(w *helpWriter, cmds []*kong.Command) {
-	if w.Options.Compact {
-		// TODO: Fix
-		panic("compact not supported")
+	if len(cmds) == 0 {
+		return
+	} else if w.Options.Tree {
+		panic("Options.Tree not supported")
 	}
+
 	// TODO: Handle groups
 	lines := [][]string{}
 	for _, cmd := range cmds {
 		if cmd.Hidden {
 			continue
 		}
-		lines = append(lines, []string{
-			"  ",
-			ColorCommand(cmd.Path()),
-			cmd.Help,
-		})
+		lines = append(lines, formatCommand(cmd, w.Options.Compact)...)
 	}
 	printCard(w, "Commands", lines)
 
