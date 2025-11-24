@@ -4,8 +4,6 @@ Library to generate pretty help output for Go CLI's that use [alecthomas/kong](h
 
 ## Basic Example
 
-<!-- TODO: Make sure the import is correct -->
-
 ```go
 package main
 
@@ -33,6 +31,8 @@ func main() {
 	}
 }
 ```
+
+A more detail example can be found in [_examples/readme/main.go](_examples/readme/main.go).
 
 ## Upcoming
 - [ ] Better examples/docs
