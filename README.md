@@ -1,7 +1,6 @@
 # kong-help
 
-Library to generate pretty help output for Go CLI's that use [alecthomas/kong](https://github.com/alecthomas/kong).
-
+Library to generate pretty help output for Go CLI's that use [alecthomas/kong](https://github.com/alecthomas/kong). Help output based heavily on the format used by [rendercv](https://github.com/rendercv/rendercv).
 
 ## Basic Example
 
@@ -37,7 +36,6 @@ func main() {
 
 ## Upcoming
 - [ ] Better examples/docs
-- [ ] Adjustable width (and improved wrapping)
 - [ ] Support for command grouping
 - [ ] Support for all `kong.HelpOption`'s
 - [ ] Help formatting options? (IE control of styling)
