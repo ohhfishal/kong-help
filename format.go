@@ -105,7 +105,14 @@ func formatFlag(flag *kong.Flag, format kong.HelpValueFormatter) []string {
 		} else {
 			flagStr += ", --" + value.Name
 		}
-		if tag := value.Tag; tag != nil && tag.HasDefault {
+		if len(flag.Aliases) > 0 {
+			for _, alias := range flag.Aliases {
+				flagStr += ",--" + alias
+			}
+		}
+		if placeholder := flag.PlaceHolder; placeholder != "" {
+			flagStr += fmt.Sprintf(`=%s`, ColorPlaceHolder(placeholder))
+		} else if tag := value.Tag; tag != nil && tag.HasDefault {
 			var q string
 			if value.Target.Kind() == reflect.String {
 				q = `"`

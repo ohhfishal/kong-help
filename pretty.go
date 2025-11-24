@@ -11,6 +11,7 @@ import (
 var ColorExample = color.New(color.FgYellow).SprintFunc()
 var ColorRequired = color.New(color.FgRed).SprintFunc()
 var ColorDefault = color.New(color.FgMagenta).SprintFunc()
+var ColorPlaceHolder = ColorDefault
 var ColorCommand = color.New(color.FgCyan).SprintFunc()
 var ColorLow = color.HiBlackString
 var ColorType = ColorExample
