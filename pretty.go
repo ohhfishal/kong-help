@@ -7,8 +7,6 @@ import (
 	"strings"
 )
 
-var _ kong.HelpPrinter = PrettyHelpPrinter
-
 // TODO: Make these configurable
 var ColorExample = color.New(color.FgYellow).SprintFunc()
 var ColorRequired = color.New(color.FgRed).SprintFunc()
@@ -18,34 +16,35 @@ var ColorLow = color.HiBlackString
 var ColorType = ColorExample
 var ColorGroup = color.New(color.FgBlue).Add(color.Underline).SprintFunc()
 
-func PrettyHelpPrinter(options kong.HelpOptions, ctx *kong.Context) error {
-	if ctx.Empty() {
-		options.Summary = false
-	}
-
-	// TODO: Have this controlled via an option
-	options.ValueFormatter = PrettyValueFormatter(options.ValueFormatter)
-
-	w := newHelpWriter(ctx, options)
-	if selected := ctx.Selected(); selected == nil {
-		app := ctx.Model
-		if !w.Options.NoAppSummary {
-			w.Print("")
-			w.Printf("  %s: %s%s", ColorExample("Usuage"), app.Name, app.Summary())
+func NewPrettyPrinter(printOpts Options) kong.HelpPrinter {
+	return func(options kong.HelpOptions, ctx *kong.Context) error {
+		if ctx.Empty() {
+			options.Summary = false
 		}
-		printNode(w, app.Node, true)
-	} else {
-		if !w.Options.NoAppSummary {
-			w.Print("")
-			w.Printf("  %s: %s", ColorExample("Usuage"), selected.Summary())
+		// TODO: Have this controlled via an option
+		options.ValueFormatter = PrettyValueFormatter(options.ValueFormatter)
+		w := newHelpWriter(ctx, options, printOpts.width)
+
+		if selected := ctx.Selected(); selected == nil {
+			app := ctx.Model
+			if !w.Options.NoAppSummary {
+				w.Print("")
+				w.Printf("  %s: %s%s", ColorExample("Usuage"), app.Name, app.Summary())
+			}
+			printNode(w, app.Node, true)
+		} else {
+			if !w.Options.NoAppSummary {
+				w.Print("")
+				w.Printf("  %s: %s", ColorExample("Usuage"), selected.Summary())
+			}
+			printNode(w, selected, true)
 		}
-		printNode(w, selected, true)
+		// TODO: Handle Run %s --help for more info lines
+		if _, err := w.WriteTo(ctx.Stdout); err != nil {
+			return err
+		}
+		return nil
 	}
-	// TODO: Handle Run %s --help for more info lines
-	if _, err := w.WriteTo(ctx.Stdout); err != nil {
-		return err
-	}
-	return nil
 }
 
 func printNode(w *helpWriter, node *kong.Node, hide bool) {

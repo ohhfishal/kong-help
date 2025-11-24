@@ -19,14 +19,14 @@ type helpWriter struct {
 	width   int
 }
 
-func newHelpWriter(ctx *kong.Context, options kong.HelpOptions) *helpWriter {
+func newHelpWriter(ctx *kong.Context, options kong.HelpOptions, width int) *helpWriter {
 	lines := []string{}
 	return &helpWriter{
 		Options: options,
 		lines:   &lines,
 		// TODO: Get this from somewhere else
 		// TODO: Use $COLUMNS? golang.org/x/term .IsTerminal(os.Stdout.Fd())?
-		width: 80,
+		width: width,
 	}
 }
 
