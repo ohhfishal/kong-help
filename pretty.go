@@ -25,21 +25,23 @@ func NewPrettyPrinter(printOpts Options) kong.HelpPrinter {
 		options.ValueFormatter = PrettyValueFormatter(options.ValueFormatter)
 		w := newHelpWriter(ctx, options, printOpts.width)
 
+		app := ctx.Model
 		if selected := ctx.Selected(); selected == nil {
-			app := ctx.Model
 			if !w.Options.NoAppSummary {
 				w.Print("")
-				w.Printf("  %s: %s%s", ColorExample("Usuage"), app.Name, app.Summary())
+				w.Indent().Printf("%s: %s%s", ColorExample("Usage"), app.Name, app.Summary())
 			}
 			printNode(w, app.Node, true)
+			w.Indent().Printf(`Use "%s --help" for more info`, app.Name)
 		} else {
 			if !w.Options.NoAppSummary {
 				w.Print("")
-				w.Printf("  %s: %s", ColorExample("Usuage"), selected.Summary())
+				w.Indent().Printf("%s: %s", ColorExample("Usage"), selected.Summary())
 			}
 			printNode(w, selected, true)
+			w.Indent().Printf(`Use "%s %s --help" for more info`, app.Name, selected.Name)
 		}
-		// TODO: Handle Run %s --help for more info lines
+
 		if _, err := w.WriteTo(ctx.Stdout); err != nil {
 			return err
 		}
