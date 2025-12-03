@@ -1,6 +1,7 @@
 package konghelp
 
 import (
+	"errors"
 	"fmt"
 	"github.com/alecthomas/kong"
 	"io"
@@ -10,6 +11,8 @@ import (
 
 // Ensure we implement the correct interfaces
 var _ io.WriterTo = &helpWriter{}
+
+const _MaxIterations = 100
 
 type helpWriter struct {
 	Options kong.HelpOptions
@@ -100,7 +103,12 @@ func AggregateIntoLines(parts []string, maxWidth int) ([]string, error) {
 	// Find most number of columns that fit without wrapping
 	var paddingSize int
 	var lines []string
+	var count int
 	for {
+		count++
+		if count > _MaxIterations {
+			return nil, errors.New("not implemented: truncating long flags: terminal too small")
+		}
 		if tail == 0 {
 			return nil, fmt.Errorf("terminal too small: %v", parts)
 		}
