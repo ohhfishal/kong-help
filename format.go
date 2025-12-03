@@ -25,6 +25,9 @@ func PrettyValueFormatter(formatter kong.HelpValueFormatter) kong.HelpValueForma
 
 func formatValue(tag *kong.Tag, value reflect.Value, showBool bool) string {
 	if tag != nil && tag.Type != "" {
+		if tag.Type == "filecontent" {
+			return normalizeType("PATH")
+		}
 		return normalizeType(tag.Type)
 	}
 	switch value.Kind() {
