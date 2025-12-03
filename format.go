@@ -23,7 +23,10 @@ func PrettyValueFormatter(formatter kong.HelpValueFormatter) kong.HelpValueForma
 	}
 }
 
-func formatValue(value reflect.Value, showBool bool) string {
+func formatValue(tag *kong.Tag, value reflect.Value, showBool bool) string {
+	if tag != nil && tag.Type != "" {
+		return normalizeType(tag.Type)
+	}
 	switch value.Kind() {
 	case reflect.Pointer:
 		return formatType(value.Type().Elem())
@@ -43,6 +46,10 @@ func formatType(t reflect.Type) string {
 	if name == "" {
 		name = t.String()
 	}
+	return normalizeType(name)
+}
+
+func normalizeType(name string) string {
 	return ColorType(strings.ToUpper(name))
 }
 
@@ -62,7 +69,7 @@ func formatPositional(arg *kong.Positional, format kong.HelpValueFormatter) []st
 		prefix,
 		arg.Name,
 		// TODO: Parse format/enum to do along the line of PATH[existing file] or STRING[enum]
-		formatValue(arg.Target, false),
+		formatValue(arg.Tag, arg.Target, false),
 		// TODO: Write a custom ValueFormatter to do: "Help Message. [required] [default=""] etc
 		format(arg),
 	}
@@ -125,7 +132,7 @@ func formatFlag(flag *kong.Flag, format kong.HelpValueFormatter) []string {
 		prefix,
 		flagStr,
 		// TODO: Parse format/enum to do along the line of PATH[existing file] or STRING[enum]
-		formatValue(value.Target, false),
+		formatValue(value.Tag, value.Target, false),
 		// TODO: Write a custom ValueFormatter to do: "Help Message. [required] [default=""] etc
 		format(value),
 	}
