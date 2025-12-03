@@ -10,7 +10,9 @@ import (
 type CMD struct {
 	Version bool   `short:"v" help:"Print the Git suite version that the git program came from."`
 	GitDir  string `type:"path" help:"Set the path to the reposity (\".git\" directory)."`
-	Init    struct {
+	Status  struct {
+	} `cmd:"" default:"1" help:"Show the git status of the Git repository."`
+	Init struct {
 		Quiet     bool   `short:"q" help:"Only print error and warning messages; all other output will be suppressed."`
 		Directory string `help:"If you provide a <directory>, the command is run inside it."`
 	} `cmd:"" help:"Create an empty Git repository or reinitialize an existing one."`

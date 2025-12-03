@@ -82,11 +82,15 @@ func formatCommand(cmd *kong.Command, compact bool) [][]string {
 	if compact {
 		slog.Warn("Option.Compact currently not supported")
 	}
+	tags := " "
+	if cmd.Tag != nil && (cmd.Tag.Default == "withargs" || cmd.Tag.Default == "1") {
+		tags += ColorDefault("(default) ")
+	}
 	return [][]string{
 		{
 			"  ",
 			ColorCommand(cmd.Path()),
-			cmd.Help,
+			cmd.Help + tags,
 		},
 	}
 }
