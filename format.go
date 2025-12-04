@@ -19,16 +19,23 @@ func PrettyValueFormatter(formatter kong.HelpValueFormatter) kong.HelpValueForma
 		if tag.Required {
 			parts = append(parts, ColorRequired("[required]"))
 		}
+		// if tag.HasDefault {
+		// 	parts = append(parts, ColorDefault(fmt.Sprintf("[default=%s]", tag.Default)))
+		// }
 		return strings.Join(parts, " ")
 	}
 }
 
 func formatValue(tag *kong.Tag, value reflect.Value, showBool bool) string {
 	if tag != nil && tag.Type != "" {
-		if tag.Type == "filecontent" {
+		switch tag.Type {
+		case "filecontent":
 			return normalizeType("PATH")
+		case "existingfile":
+			return normalizeType("FILE")
+		default:
+			return normalizeType(tag.Type)
 		}
-		return normalizeType(tag.Type)
 	}
 	switch value.Kind() {
 	case reflect.Pointer:

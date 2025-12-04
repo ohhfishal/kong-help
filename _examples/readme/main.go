@@ -19,7 +19,7 @@ type CMD struct {
 	Commit struct {
 		All     bool   `aliases:"branches" help:"Automatically stage files that have been moddified and deleted, but new files you have not told Git about are not affected."`
 		Message string `short:"m" placeholder:"<msg>" help:"Use <msg> as the commit message."`
-		File    []byte `type:"filecontent" help:"File to commit"`
+		File    []byte `arg:"" default:"test.txt" type:"existingfile" help:"File to commit."`
 	} `cmd:"" help:"Record changes to the repository."`
 	Push struct {
 		Repository string `arg:"" optional:"" help:"The remote rerpository that is the destination of a push operation."`
