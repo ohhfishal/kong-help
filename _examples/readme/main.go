@@ -23,7 +23,7 @@ type CMD struct {
 	} `cmd:"" help:"Record changes to the repository."`
 	Push struct {
 		Repository string `arg:"" optional:"" help:"The remote rerpository that is the destination of a push operation."`
-		All        bool   `aliases:"branches" help:"Push all branches; cannot be used with other <refspec>."`
+		All        bool   `aliases:"branches" default:"false" help:"Push all branches; cannot be used with other <refspec>."`
 		Delete     bool   `short:"d" help:"All listed refs are deleted from the remote repository."`
 	} `cmd:"" help:"Update remote rerfs along with associated objects."`
 }

@@ -19,7 +19,7 @@ func PrettyValueFormatter(formatter kong.HelpValueFormatter) kong.HelpValueForma
 		if tag.Required {
 			parts = append(parts, ColorRequired("[required]"))
 		}
-		if tag.HasDefault {
+		if value.Flag == nil && tag.HasDefault {
 			parts = append(parts, ColorDefault(fmt.Sprintf("[default=%s]", tag.Default)))
 		}
 		return strings.Join(parts, " ")
